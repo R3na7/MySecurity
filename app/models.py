@@ -20,6 +20,9 @@ class User(UserMixin, db.Model):
     encryption_algorithm = db.Column(db.String(50), nullable=False)
     encryption_metadata = db.Column(db.Text, nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    is_blocked = db.Column(db.Boolean, default=False, nullable=False)
+    password_policy = db.Column(db.String(50), nullable=True)
+    must_change_password = db.Column(db.Boolean, default=False, nullable=False)
     preferred_language = db.Column(db.String(5), default=DEFAULT_LANGUAGE, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 

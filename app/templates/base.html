@@ -16,6 +16,7 @@
             {% if current_user.is_admin %}
             <li><a href="{{ url_for('main.admin_panel') }}">{{ t('admin_panel') }}</a></li>
             {% endif %}
+            <li><a href="{{ url_for('main.change_password') }}">{{ t('change_password') }}</a></li>
             <li><a href="{{ url_for('main.logout') }}">{{ t('logout') }}</a></li>
         {% else %}
             <li><a href="{{ url_for('main.login') }}">{{ t('login') }}</a></li>

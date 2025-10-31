@@ -91,6 +91,11 @@ body {
     color: var(--accent-light);
 }
 
+.button.danger {
+    background: var(--danger);
+    color: #0b1f33;
+}
+
 .form-card, .dashboard, .detail, .list, .admin {
     background: rgba(18, 43, 69, 0.9);
     padding: 2rem;
@@ -213,6 +218,76 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
+}
+
+.user-management {
+    margin-top: 2rem;
+    background: rgba(11, 31, 51, 0.6);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text);
+}
+
+.user-table th,
+.user-table td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    vertical-align: top;
+}
+
+.user-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.status {
+    display: inline-block;
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+}
+
+.status.blocked {
+    color: var(--danger);
+}
+
+.status.active {
+    color: var(--accent-light);
+}
+
+.status.warning {
+    color: #ffd166;
+    display: block;
+}
+
+.user-table .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.user-table .actions form {
+    margin: 0;
+}
+
+.policy-form select {
+    width: 100%;
+    margin-bottom: 0.5rem;
 }
 
 @media (max-width: 640px) {
