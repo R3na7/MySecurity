@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="form-card">
+    <h2>{{ t('register') }}</h2>
+    <p class="muted">{{ t('encryption_section_title') }}</p>
+    <form method="post" class="form">
+        <label>{{ t('username') }}
+            <input type="text" name="username" required>
+        </label>
+        <label>{{ t('password') }}
+            <input type="password" name="password" required>
+        </label>
+        <label>{{ t('password_confirm') }}
+            <input type="password" name="confirm_password" required>
+        </label>
+        <label>{{ t('encryption_algorithm') }}
+            <select name="algorithm" required>
+                <option value="" disabled selected>--</option>
+                {% for algorithm in algorithms %}
+                    <option value="{{ algorithm.id }}">{{ algorithm.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>{{ t('encryption_key') }} <span class="hint">({{ t('optional_key') }})</span>
+            <input type="text" name="encryption_key" placeholder="{{ t('algorithm_hint') }}">
+        </label>
+        <p class="muted">{{ t('encryption_key_optional_notice') }}</p>
+        <div class="algorithm-grid">
+            {% for algorithm in algorithms %}
+            <div class="algorithm-card">
+                <h3>{{ algorithm.name }}</h3>
+                <p>{{ algorithm.description }}</p>
+                <p class="hint">{{ algorithm.hint }}</p>
+                {% if algorithm.requires_key %}
+                <span class="tag">Key</span>
+                {% else %}
+                <span class="tag neutral">No key</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <button class="button" type="submit">{{ t('register_action') }}</button>
+    </form>
+</section>
+{% endblock %}

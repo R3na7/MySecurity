@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="list">
+    <h2>{{ t('tests') }}</h2>
+    {% if tests %}
+        <ul>
+            {% for test in tests %}
+            <li>
+                <article>
+                    <h3>{{ test.title }}</h3>
+                    <p>{{ test.description }}</p>
+                    <p class="muted">{{ t('created_at') }}: {{ test.created_at.strftime('%Y-%m-%d') }}</p>
+                    <a class="button secondary" href="{{ url_for('main.test_detail', test_id=test.id) }}">{{ t('view') }}</a>
+                </article>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="muted">{{ t('no_tests') }}</p>
+    {% endif %}
+</section>
+{% endblock %}

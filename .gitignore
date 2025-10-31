@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+instance/
+security.db
+*.sqlite3
+.idea/
