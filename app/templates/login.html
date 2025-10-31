@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="form-card">
+    <h2>{{ t('login') }}</h2>
+    <form method="post" class="form">
+        <label>{{ t('username') }}
+            <input type="text" name="username" required>
+        </label>
+        <label>{{ t('password') }}
+            <input type="password" name="password" required>
+        </label>
+        <button class="button" type="submit">{{ t('login_action') }}</button>
+    </form>
+</section>
+{% endblock %}

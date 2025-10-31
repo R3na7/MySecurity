@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="admin">
+    <h2>{{ t('admin_panel') }}</h2>
+    <div class="admin-grid">
+        <form method="post" class="form card">
+            <input type="hidden" name="form_type" value="theory">
+            <h3>{{ t('add_theory') }}</h3>
+            <label>{{ t('title') }}
+                <input type="text" name="title" required>
+            </label>
+            <label>{{ t('content') }}
+                <textarea name="content" rows="6" required></textarea>
+            </label>
+            <label>{{ t('language_label') }}
+                <select name="language">
+                    {% for code, name in language_choices %}
+                    <option value="{{ code }}">{{ name }}</option>
+                    {% endfor %}
+                    <option value="all">All</option>
+                </select>
+            </label>
+            <button class="button" type="submit">{{ t('create') }}</button>
+        </form>
+
+        <form method="post" class="form card">
+            <input type="hidden" name="form_type" value="test">
+            <h3>{{ t('add_test') }}</h3>
+            <label>{{ t('title') }}
+                <input type="text" name="title" required>
+            </label>
+            <label>{{ t('description') }}
+                <textarea name="description" rows="4" required></textarea>
+            </label>
+            <label>{{ t('language_label') }}
+                <select name="language">
+                    {% for code, name in language_choices %}
+                    <option value="{{ code }}">{{ name }}</option>
+                    {% endfor %}
+                    <option value="all">All</option>
+                </select>
+            </label>
+            <button class="button" type="submit">{{ t('create') }}</button>
+        </form>
+
+        <form method="post" class="form card">
+            <input type="hidden" name="form_type" value="question">
+            <h3>{{ t('add_question') }}</h3>
+            <label>{{ t('select_test') }}
+                <select name="test_id" required>
+                    <option value="" disabled selected>--</option>
+                    {% for test in tests %}
+                    <option value="{{ test.id }}">{{ test.title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>{{ t('question') }}
+                <textarea name="prompt" rows="3" required></textarea>
+            </label>
+            <label>{{ t('options') }}
+                <textarea name="options" rows="3" placeholder="{{ t('options_hint') }}" required></textarea>
+            </label>
+            <label>{{ t('correct_option_index') }}
+                <input type="number" min="1" name="correct_index" required>
+            </label>
+            <button class="button" type="submit">{{ t('create') }}</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

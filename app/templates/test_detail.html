@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="detail">
+    <header>
+        <h2>{{ test.title }}</h2>
+        <p>{{ test.description }}</p>
+    </header>
+    {% if test.questions %}
+    <form method="post" class="form">
+        {% for question in test.questions %}
+        <fieldset>
+            <legend>{{ loop.index }}. {{ question.prompt }}</legend>
+            {% for option in question.options() %}
+            <label class="option">
+                <input type="radio" name="{{ question.id }}" value="{{ loop.index0 }}">
+                {{ option }}
+            </label>
+            {% endfor %}
+        </fieldset>
+        {% endfor %}
+        <button class="button" type="submit">{{ t('submit') }}</button>
+    </form>
+    {% else %}
+    <p class="muted">{{ t('no_tests') }}</p>
+    {% endif %}
+</article>
+{% endblock %}
