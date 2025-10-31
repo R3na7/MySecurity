@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ t('app_name') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">{{ t('app_name') }}</div>
+    <ul class="navbar-links">
+        {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('main.dashboard') }}">{{ t('dashboard_title') }}</a></li>
+            <li><a href="{{ url_for('main.theory_list') }}">{{ t('theory') }}</a></li>
+            <li><a href="{{ url_for('main.tests_list') }}">{{ t('tests') }}</a></li>
+            {% if current_user.is_admin %}
+            <li><a href="{{ url_for('main.admin_panel') }}">{{ t('admin_panel') }}</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('main.change_password') }}">{{ t('change_password') }}</a></li>
+            <li><a href="{{ url_for('main.logout') }}">{{ t('logout') }}</a></li>
+        {% else %}
+            <li><a href="{{ url_for('main.login') }}">{{ t('login') }}</a></li>
+            <li><a href="{{ url_for('main.register') }}">{{ t('register') }}</a></li>
+        {% endif %}
+    </ul>
+    <div class="language-switcher">
+        <span>{{ t('language') }}:</span>
+        {% for code, name in language_choices %}
+            <a href="{{ url_for('main.switch_language', lang_code=code) }}" class="{% if current_language == code %}active{% endif %}">{{ name }}</a>
+        {% endfor %}
+    </div>
+</nav>
+<main class="content">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="flash">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

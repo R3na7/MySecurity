@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="list">
+    <h2>{{ t('theory') }}</h2>
+    {% if theories %}
+        <ul>
+            {% for theory in theories %}
+            <li>
+                <article>
+                    <h3>{{ theory.title }}</h3>
+                    <p class="muted">{{ t('theory_created_at') }}: {{ theory.created_at.strftime('%Y-%m-%d') }}</p>
+                    <a class="button secondary" href="{{ url_for('main.theory_detail', theory_id=theory.id) }}">{{ t('view') }}</a>
+                </article>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="muted">{{ t('no_theory') }}</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="dashboard">
+    <h2>{{ greeting }}</h2>
+    <p>{{ t('dashboard_description') }}</p>
+    <div class="card-grid">
+        <a class="card" href="{{ url_for('main.theory_list') }}">
+            <h3>{{ t('theory') }}</h3>
+            <p>{{ t('welcome_message') }}</p>
+        </a>
+        <a class="card" href="{{ url_for('main.tests_list') }}">
+            <h3>{{ t('tests') }}</h3>
+            <p>{{ t('dashboard_description') }}</p>
+        </a>
+        {% if current_user.is_admin %}
+        <a class="card" href="{{ url_for('main.admin_panel') }}">
+            <h3>{{ t('admin_panel') }}</h3>
+            <p>{{ t('test_created') }}</p>
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
