@@ -456,6 +456,10 @@ def admin_panel():
             _handle_create_theory(language)
         elif form_type == "test":
             _handle_create_test(language)
+        elif form_type == "update_theory":
+            _handle_update_theory(language)
+        elif form_type == "update_test":
+            _handle_update_test(language)
         elif form_type == "question":
             _handle_create_question(language)
         elif form_type == "create_user":
@@ -480,6 +484,7 @@ def admin_panel():
             flash(message)
         return redirect(url_for("main.admin_panel"))
 
+    theories = Theory.query.order_by(Theory.created_at.desc()).all()
     tests = Test.query.order_by(Test.created_at.desc()).all()
     users = User.query.order_by(User.username).all()
     algorithm_choices = encryption_manager.as_choices(language)
@@ -488,6 +493,7 @@ def admin_panel():
     return render_template(
         "admin.html",
         language=language,
+        theories=theories,
         tests=tests,
         users=users,
         algorithms=algorithm_choices,
@@ -532,6 +538,58 @@ def _handle_create_test(language: str) -> None:
     db.session.add(test)
     db.session.commit()
     flash(translate("test_created", language))
+
+
+def _handle_update_theory(language: str) -> None:
+    theory_id = request.form.get("theory_id")
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+    item_language = request.form.get("language") or language
+
+    if not theory_id or not title or not content:
+        flash(translate("invalid_credentials", language))
+        return
+
+    try:
+        theory = Theory.query.get(int(theory_id))
+    except (TypeError, ValueError):
+        theory = None
+
+    if not theory:
+        flash(translate("invalid_credentials", language))
+        return
+
+    theory.title = title
+    theory.content = content
+    theory.language = item_language
+    db.session.commit()
+    flash(translate("theory_updated", language))
+
+
+def _handle_update_test(language: str) -> None:
+    test_id = request.form.get("test_id")
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    item_language = request.form.get("language") or language
+
+    if not test_id or not title or not description:
+        flash(translate("invalid_credentials", language))
+        return
+
+    try:
+        test = Test.query.get(int(test_id))
+    except (TypeError, ValueError):
+        test = None
+
+    if not test:
+        flash(translate("invalid_credentials", language))
+        return
+
+    test.title = title
+    test.description = description
+    test.language = item_language
+    db.session.commit()
+    flash(translate("test_updated", language))
 
 
 def _handle_create_question(language: str) -> None:
