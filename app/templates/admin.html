@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="admin">
-    <h2>{{ t('admin_panel') }}</h2>
-    {% if translations.get('admin_panel_help') %}
-    <p class="muted subtle">{{ t('admin_panel_help') }}</p>
-    {% endif %}
-    <div class="admin-grid">
-        <form method="post" class="form card floating-card" data-card-index="0">
+    <header class="admin-header floating-card" data-card-index="0">
+        <div class="admin-header__text">
+            <h2>{{ t('admin_panel') }}</h2>
+            {% if translations.get('admin_panel_help') %}
+            <p class="muted subtle">{{ t('admin_panel_help') }}</p>
+            {% endif %}
+        </div>
+        <div class="admin-header__actions">
+            <a class="button secondary nav-ghost" href="#user-management">{{ t('user_management') }}</a>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <form method="post" class="form card floating-card admin-action" data-card-index="1">
             <input type="hidden" name="form_type" value="theory">
             <h3>{{ t('add_theory') }}</h3>
             <label>{{ t('title') }}
@@ -26,7 +34,7 @@
             <button class="button full-width glow" type="submit">{{ t('create') }}</button>
         </form>
 
-        <form method="post" class="form card floating-card" data-card-index="1">
+        <form method="post" class="form card floating-card admin-action" data-card-index="2">
             <input type="hidden" name="form_type" value="test">
             <h3>{{ t('add_test') }}</h3>
             <label>{{ t('title') }}
@@ -46,7 +54,7 @@
             <button class="button full-width glow" type="submit">{{ t('create') }}</button>
         </form>
 
-        <form method="post" class="form card floating-card" data-card-index="2">
+        <form method="post" class="form card floating-card admin-action" data-card-index="3">
             <input type="hidden" name="form_type" value="question">
             <h3>{{ t('add_question') }}</h3>
             <label>{{ t('select_test') }}
@@ -69,7 +77,7 @@
             <button class="button full-width glow" type="submit">{{ t('create') }}</button>
         </form>
 
-        <form method="post" class="form card floating-card" data-card-index="3">
+        <form method="post" class="form card floating-card admin-action" data-card-index="4">
             <input type="hidden" name="form_type" value="create_user">
             <h3>{{ t('add_user') }}</h3>
             <label>{{ t('username') }}
@@ -94,73 +102,75 @@
             </label>
             <button class="button full-width glow" type="submit">{{ t('create') }}</button>
         </form>
-    </div>
 
-    <div class="card user-management floating-card" data-card-index="4">
-        <h3>{{ t('user_management') }}</h3>
-        <div class="user-table-wrapper">
-            <table class="user-table">
-                <thead>
-                    <tr>
-                        <th>{{ t('username') }}</th>
-                        <th>{{ t('status') }}</th>
-                        <th>{{ t('password_policy') }}</th>
-                        <th>{{ t('actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr data-user-id="{{ user.id }}">
-                        <td>
-                            {{ user.username }}
-                            {% if user.is_admin %}
-                                <span class="badge">{{ t('admin_panel') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="user-status" data-user-status>
-                            <span class="status-pill {% if user.is_blocked %}blocked{% else %}active{% endif %}" data-status-label>
-                                {% if user.is_blocked %}
-                                    {{ t('status_blocked') }}
-                                {% else %}
-                                    {{ t('status_active') }}
-                                {% endif %}
-                            </span>
-                            <span class="status-note{% if not user.must_change_password %} hidden{% endif %}" data-password-warning>
-                                {{ t('status_password_change_required') }}
-                            </span>
-                        </td>
-                        <td class="user-policy">
-                            <span class="policy-chip" data-policy-label>
-                                {{ policy_labels.get(user.password_policy) or t('password_policy_none') }}
-                            </span>
-                        </td>
-                        <td class="actions">
-                            <form method="post" data-async="toggle-block">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                {% if user.is_blocked %}
-                                <input type="hidden" name="form_type" value="unblock_user">
-                                <button class="button secondary full-width" type="submit">{{ t('unblock_user') }}</button>
-                                {% else %}
-                                <input type="hidden" name="form_type" value="block_user">
-                                <button class="button danger full-width" type="submit">{{ t('block_user') }}</button>
-                                {% endif %}
-                            </form>
-                            <form method="post" class="policy-form">
-                                <input type="hidden" name="form_type" value="set_policy">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <select name="policy_id">
-                                    <option value="none" {% if not user.password_policy %}selected{% endif %}>{{ t('password_policy_none') }}</option>
-                                    {% for policy_id, label in policy_choices %}
-                                    <option value="{{ policy_id }}" {% if user.password_policy == policy_id %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button class="button secondary" type="submit">{{ t('apply_policy') }}</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div id="user-management" class="card user-management floating-card" data-card-index="5">
+            <h3>{{ t('user_management') }}</h3>
+            <div class="user-table-wrapper">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>{{ t('username') }}</th>
+                            <th>{{ t('status') }}</th>
+                            <th>{{ t('password_policy') }}</th>
+                            <th>{{ t('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr data-user-id="{{ user.id }}">
+                            <td>
+                                <div class="user-primary">
+                                    <span class="user-name">{{ user.username }}</span>
+                                    {% if user.is_admin %}
+                                    <span class="badge">{{ t('admin_panel') }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="user-status" data-user-status>
+                                <span class="status-pill {% if user.is_blocked %}blocked{% else %}active{% endif %}" data-status-label>
+                                    {% if user.is_blocked %}
+                                        {{ t('status_blocked') }}
+                                    {% else %}
+                                        {{ t('status_active') }}
+                                    {% endif %}
+                                </span>
+                                <span class="status-note{% if not user.must_change_password %} hidden{% endif %}" data-password-warning>
+                                    {{ t('status_password_change_required') }}
+                                </span>
+                            </td>
+                            <td class="user-policy">
+                                <span class="policy-chip" data-policy-label>
+                                    {{ policy_labels.get(user.password_policy) or t('password_policy_none') }}
+                                </span>
+                            </td>
+                            <td class="actions">
+                                <form method="post" data-async="toggle-block" class="action-inline">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    {% if user.is_blocked %}
+                                    <input type="hidden" name="form_type" value="unblock_user">
+                                    <button class="button secondary" type="submit">{{ t('unblock_user') }}</button>
+                                    {% else %}
+                                    <input type="hidden" name="form_type" value="block_user">
+                                    <button class="button danger" type="submit">{{ t('block_user') }}</button>
+                                    {% endif %}
+                                </form>
+                                <form method="post" class="policy-form">
+                                    <input type="hidden" name="form_type" value="set_policy">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <select name="policy_id">
+                                        <option value="none" {% if not user.password_policy %}selected{% endif %}>{{ t('password_policy_none') }}</option>
+                                        {% for policy_id, label in policy_choices %}
+                                        <option value="{{ policy_id }}" {% if user.password_policy == policy_id %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="button secondary" type="submit">{{ t('apply_policy') }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </section>

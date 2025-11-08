@@ -7,27 +7,35 @@
 </head>
 <body>
 <nav class="navbar">
-    <div class="navbar-brand">{{ t('app_name') }}</div>
-    <ul class="navbar-links">
-        {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('main.dashboard') }}">{{ t('dashboard_title') }}</a></li>
-            <li><a href="{{ url_for('main.theory_list') }}">{{ t('theory') }}</a></li>
-            <li><a href="{{ url_for('main.tests_list') }}">{{ t('tests') }}</a></li>
-            {% if current_user.is_admin %}
-            <li><a href="{{ url_for('main.admin_panel') }}">{{ t('admin_panel') }}</a></li>
+    <div class="navbar-brand">
+        <a class="brand-mark" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('main.index') }}">
+            {{ t('app_name') }}
+        </a>
+    </div>
+    <div class="navbar-menu">
+        <ul class="navbar-links">
+            {% if current_user.is_authenticated %}
+                <li><a class="nav-pill" href="{{ url_for('main.dashboard') }}">{{ t('dashboard_title') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.theory_list') }}">{{ t('theory') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.tests_list') }}">{{ t('tests') }}</a></li>
+                {% if current_user.is_admin %}
+                <li><a class="nav-pill" href="{{ url_for('main.admin_panel') }}">{{ t('admin_panel') }}</a></li>
+                {% endif %}
+                <li><a class="nav-pill" href="{{ url_for('main.change_password') }}">{{ t('change_password') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.logout') }}">{{ t('logout') }}</a></li>
+            {% else %}
+                <li><a class="nav-pill" href="{{ url_for('main.login') }}">{{ t('login') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.register') }}">{{ t('register') }}</a></li>
             {% endif %}
-            <li><a href="{{ url_for('main.change_password') }}">{{ t('change_password') }}</a></li>
-            <li><a href="{{ url_for('main.logout') }}">{{ t('logout') }}</a></li>
-        {% else %}
-            <li><a href="{{ url_for('main.login') }}">{{ t('login') }}</a></li>
-            <li><a href="{{ url_for('main.register') }}">{{ t('register') }}</a></li>
-        {% endif %}
-    </ul>
-    <div class="language-switcher">
-        <span>{{ t('language') }}:</span>
-        {% for code, name in language_choices %}
-            <a href="{{ url_for('main.switch_language', lang_code=code) }}" class="{% if current_language == code %}active{% endif %}">{{ name }}</a>
-        {% endfor %}
+        </ul>
+        <div class="language-switcher">
+            <span>{{ t('language') }}</span>
+            <div class="language-options" role="group" aria-label="{{ t('language') }}">
+                {% for code, name in language_choices %}
+                    <a href="{{ url_for('main.switch_language', lang_code=code) }}" class="language-pill {% if current_language == code %}active{% endif %}">{{ name }}</a>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </nav>
 <main class="content">
