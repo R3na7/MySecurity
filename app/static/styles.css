@@ -801,6 +801,87 @@ body {
     }
 }
 
+.algorithm-details {
+    margin: 0.5rem 0 0;
+    background: rgba(11, 31, 51, 0.45);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1rem;
+}
+
+.algorithm-details__header {
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.enhanced-form {
+    position: relative;
+    overflow: hidden;
+}
+
+.enhanced-form::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(46, 168, 230, 0.12), transparent 55%);
+    pointer-events: none;
+}
+
+.flash-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flash {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.flash.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.flash.is-fading {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.flash.success {
+    background: rgba(46, 168, 230, 0.25);
+}
+
+.flash.error {
+    background: rgba(255, 107, 107, 0.25);
+}
+
+.flash.info {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes floatUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
 @media (max-width: 640px) {
     .navbar {
         flex-direction: column;
