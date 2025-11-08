@@ -7,33 +7,41 @@
 </head>
 <body>
 <nav class="navbar">
-    <div class="navbar-brand">{{ t('app_name') }}</div>
-    <ul class="navbar-links">
-        {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('main.dashboard') }}">{{ t('dashboard_title') }}</a></li>
-            <li><a href="{{ url_for('main.theory_list') }}">{{ t('theory') }}</a></li>
-            <li><a href="{{ url_for('main.tests_list') }}">{{ t('tests') }}</a></li>
-            {% if current_user.is_admin %}
-            <li><a href="{{ url_for('main.admin_panel') }}">{{ t('admin_panel') }}</a></li>
+    <div class="navbar-brand">
+        <a class="brand-mark" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('main.index') }}">
+            {{ t('app_name') }}
+        </a>
+    </div>
+    <div class="navbar-menu">
+        <ul class="navbar-links">
+            {% if current_user.is_authenticated %}
+                <li><a class="nav-pill" href="{{ url_for('main.dashboard') }}">{{ t('dashboard_title') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.theory_list') }}">{{ t('theory') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.tests_list') }}">{{ t('tests') }}</a></li>
+                {% if current_user.is_admin %}
+                <li><a class="nav-pill" href="{{ url_for('main.admin_panel') }}">{{ t('admin_panel') }}</a></li>
+                {% endif %}
+                <li><a class="nav-pill" href="{{ url_for('main.change_password') }}">{{ t('change_password') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.logout') }}">{{ t('logout') }}</a></li>
+            {% else %}
+                <li><a class="nav-pill" href="{{ url_for('main.login') }}">{{ t('login') }}</a></li>
+                <li><a class="nav-pill" href="{{ url_for('main.register') }}">{{ t('register') }}</a></li>
             {% endif %}
-            <li><a href="{{ url_for('main.change_password') }}">{{ t('change_password') }}</a></li>
-            <li><a href="{{ url_for('main.logout') }}">{{ t('logout') }}</a></li>
-        {% else %}
-            <li><a href="{{ url_for('main.login') }}">{{ t('login') }}</a></li>
-            <li><a href="{{ url_for('main.register') }}">{{ t('register') }}</a></li>
-        {% endif %}
-    </ul>
-    <div class="language-switcher">
-        <span>{{ t('language') }}:</span>
-        {% for code, name in language_choices %}
-            <a href="{{ url_for('main.switch_language', lang_code=code) }}" class="{% if current_language == code %}active{% endif %}">{{ name }}</a>
-        {% endfor %}
+        </ul>
+        <div class="language-switcher">
+            <span>{{ t('language') }}</span>
+            <div class="language-options" role="group" aria-label="{{ t('language') }}">
+                {% for code, name in language_choices %}
+                    <a href="{{ url_for('main.switch_language', lang_code=code) }}" class="language-pill {% if current_language == code %}active{% endif %}">{{ name }}</a>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </nav>
 <main class="content">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <div class="flash-messages">
+            <div class="flash-messages" role="status" aria-live="polite">
                 {% for message in messages %}
                     <div class="flash">{{ message }}</div>
                 {% endfor %}
@@ -42,5 +50,153 @@
     {% endwith %}
     {% block content %}{% endblock %}
 </main>
+<script>
+(function () {
+    const createFlashContainer = () => {
+        let container = document.querySelector('.flash-messages');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'flash-messages';
+            container.setAttribute('role', 'status');
+            container.setAttribute('aria-live', 'polite');
+            const content = document.querySelector('.content');
+            if (content) {
+                content.prepend(container);
+            }
+        }
+        return container;
+    };
+
+    const showFlash = (message, type = 'info') => {
+        if (!message) {
+            return;
+        }
+        const container = createFlashContainer();
+        const flash = document.createElement('div');
+        flash.className = `flash ${type}`;
+        flash.textContent = message;
+        container.appendChild(flash);
+        requestAnimationFrame(() => {
+            flash.classList.add('is-visible');
+        });
+        setTimeout(() => {
+            flash.classList.add('is-fading');
+            flash.addEventListener('transitionend', () => {
+                flash.remove();
+            }, { once: true });
+        }, 4800);
+    };
+
+    document.querySelectorAll('.flash-messages .flash').forEach((flash) => {
+        requestAnimationFrame(() => {
+            flash.classList.add('is-visible');
+        });
+        setTimeout(() => {
+            flash.classList.add('is-fading');
+            flash.addEventListener('transitionend', () => flash.remove(), { once: true });
+        }, 4800);
+    });
+
+    const getFormButton = (form) => form.querySelector('button[type="submit"]');
+
+    const toggleBusyState = (button, isBusy, nextLabel) => {
+        if (!button) {
+            return;
+        }
+        const originalLabel = button.dataset.originalLabel || button.textContent;
+        if (!button.dataset.originalLabel) {
+            button.dataset.originalLabel = originalLabel;
+        }
+        if (isBusy) {
+            button.disabled = true;
+            button.classList.add('is-busy');
+        } else {
+            button.disabled = false;
+            button.classList.remove('is-busy');
+            if (nextLabel) {
+                button.textContent = nextLabel;
+            } else {
+                button.textContent = originalLabel;
+            }
+        }
+    };
+
+    const updateUserRow = (row, data) => {
+        if (!row || !data) {
+            return;
+        }
+        const statusWrapper = row.querySelector('[data-user-status]');
+        const statusLabel = statusWrapper?.querySelector('[data-status-label]');
+        const passwordWarning = statusWrapper?.querySelector('[data-password-warning]');
+        if (statusLabel) {
+            statusLabel.textContent = data.statusText || '';
+            statusLabel.classList.remove('blocked', 'active');
+            if (data.statusClass) {
+                statusLabel.classList.add(data.statusClass);
+            }
+        }
+        if (passwordWarning) {
+            if (data.mustChangePassword) {
+                passwordWarning.textContent = data.passwordWarning || passwordWarning.textContent;
+                passwordWarning.classList.remove('hidden');
+            } else {
+                passwordWarning.classList.add('hidden');
+            }
+        }
+        const policyLabel = row.querySelector('[data-policy-label]');
+        if (policyLabel && data.policyLabel) {
+            policyLabel.textContent = data.policyLabel;
+        }
+
+        const form = row.querySelector('form[data-async="toggle-block"]');
+        const button = form ? getFormButton(form) : null;
+        const formTypeField = form?.querySelector('input[name="form_type"]');
+        if (formTypeField && data.nextActionFormType) {
+            formTypeField.value = data.nextActionFormType;
+        }
+        if (button) {
+            button.classList.remove('danger', 'secondary');
+            if (data.nextActionStyle) {
+                button.classList.add(data.nextActionStyle);
+            }
+            if (data.nextActionLabel) {
+                button.textContent = data.nextActionLabel;
+            }
+        }
+    };
+
+    document.addEventListener('submit', async (event) => {
+        const form = event.target;
+        const asyncType = form.dataset.async;
+        if (!asyncType) {
+            return;
+        }
+        event.preventDefault();
+        const submitButton = getFormButton(form);
+        toggleBusyState(submitButton, true);
+        try {
+            const response = await fetch(form.action || window.location.href, {
+                method: form.method || 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'fetch'
+                },
+                body: new FormData(form)
+            });
+            const data = await response.json().catch(() => ({}));
+            const type = response.ok ? 'success' : 'error';
+            showFlash(data.message || (response.ok ? '' : response.statusText), type);
+            if (response.ok && asyncType === 'toggle-block') {
+                updateUserRow(form.closest('tr'), data);
+            }
+        } catch (error) {
+            showFlash(error?.message || 'Unexpected error', 'error');
+        } finally {
+            toggleBusyState(submitButton, false);
+        }
+    });
+})();
+</script>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>
