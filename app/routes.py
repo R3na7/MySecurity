@@ -8,6 +8,7 @@ from typing import Dict, List, Tuple
 from flask import (
     Blueprint,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -52,6 +53,15 @@ def _ensure_language():
     language = get_current_language()
     session["language"] = language
     return language
+
+
+def _wants_json_response() -> bool:
+    best = request.accept_mimetypes.best_match(["application/json", "text/html"])
+    return (
+        best == "application/json"
+        and request.accept_mimetypes[best]
+        > request.accept_mimetypes["text/html"]
+    )
 
 
 def _password_policy_choices(language: str) -> List[Tuple[str, str]]:
@@ -237,8 +247,11 @@ def logout():
 @login_required
 def change_password():
     language = _ensure_language()
-    algorithm = encryption_manager.get(current_user.encryption_algorithm)
-    requires_key = algorithm.requires_key()
+    current_algorithm = encryption_manager.get(current_user.encryption_algorithm)
+    algorithm_choices = encryption_manager.as_choices(language)
+    selected_algorithm = current_algorithm
+    selected_algorithm_id = current_algorithm.id
+    requires_key = current_algorithm.requires_key()
     policy_hint = _password_policy_description(current_user.password_policy, language)
 
     if request.method == "POST":
@@ -246,15 +259,30 @@ def change_password():
         new_password = request.form.get("new_password", "")
         confirm_password = request.form.get("confirm_password", "")
         key_input = request.form.get("encryption_key") or None
+        requested_algorithm_id = (
+            request.form.get("algorithm") or current_user.encryption_algorithm
+        )
+
+        try:
+            selected_algorithm = encryption_manager.get(requested_algorithm_id)
+        except KeyError:
+            selected_algorithm = current_algorithm
+            requested_algorithm_id = current_algorithm.id
+
+        selected_algorithm_id = requested_algorithm_id
+        requires_key = selected_algorithm.requires_key()
 
         if new_password != confirm_password:
             flash(translate("password_mismatch", language))
             return render_template(
                 "change_password.html",
                 language=language,
+                algorithms=algorithm_choices,
+                selected_algorithm_id=selected_algorithm_id,
                 requires_key=requires_key,
-                key_hint=algorithm.get_key_hint(language),
+                key_hint=selected_algorithm.get_key_hint(language),
                 policy_hint=policy_hint,
+                algorithm_description=selected_algorithm.get_description(language),
             )
 
         metadata = current_user.metadata_dict()
@@ -269,18 +297,24 @@ def change_password():
                 return render_template(
                     "change_password.html",
                     language=language,
+                    algorithms=algorithm_choices,
+                    selected_algorithm_id=selected_algorithm_id,
                     requires_key=requires_key,
-                    key_hint=algorithm.get_key_hint(language),
+                    key_hint=selected_algorithm.get_key_hint(language),
                     policy_hint=policy_hint,
+                    algorithm_description=selected_algorithm.get_description(language),
                 )
         except KeyError:
             flash(translate("invalid_old_password", language))
             return render_template(
                 "change_password.html",
                 language=language,
+                algorithms=algorithm_choices,
+                selected_algorithm_id=selected_algorithm_id,
                 requires_key=requires_key,
-                key_hint=algorithm.get_key_hint(language),
+                key_hint=selected_algorithm.get_key_hint(language),
                 policy_hint=policy_hint,
+                algorithm_description=selected_algorithm.get_description(language),
             )
 
         is_valid, error_message = _validate_password_policy(current_user, new_password, language)
@@ -289,14 +323,17 @@ def change_password():
             return render_template(
                 "change_password.html",
                 language=language,
+                algorithms=algorithm_choices,
+                selected_algorithm_id=selected_algorithm_id,
                 requires_key=requires_key,
-                key_hint=algorithm.get_key_hint(language),
+                key_hint=selected_algorithm.get_key_hint(language),
                 policy_hint=policy_hint,
+                algorithm_description=selected_algorithm.get_description(language),
             )
 
         try:
             result = encryption_manager.encrypt_password(
-                current_user.encryption_algorithm,
+                selected_algorithm_id,
                 new_password,
                 key_input,
             )
@@ -305,13 +342,17 @@ def change_password():
             return render_template(
                 "change_password.html",
                 language=language,
+                algorithms=algorithm_choices,
+                selected_algorithm_id=selected_algorithm_id,
                 requires_key=requires_key,
-                key_hint=algorithm.get_key_hint(language),
+                key_hint=selected_algorithm.get_key_hint(language),
                 policy_hint=policy_hint,
+                algorithm_description=selected_algorithm.get_description(language),
             )
 
         current_user.encrypted_password = result.ciphertext
         current_user.encryption_metadata = json.dumps(result.metadata)
+        current_user.encryption_algorithm = selected_algorithm_id
         current_user.must_change_password = False
         db.session.commit()
         flash(translate("password_changed", language))
@@ -320,9 +361,12 @@ def change_password():
     return render_template(
         "change_password.html",
         language=language,
+        algorithms=algorithm_choices,
+        selected_algorithm_id=selected_algorithm_id,
         requires_key=requires_key,
-        key_hint=algorithm.get_key_hint(language),
+        key_hint=current_algorithm.get_key_hint(language),
         policy_hint=policy_hint,
+        algorithm_description=current_algorithm.get_description(language),
     )
 
 
@@ -404,22 +448,43 @@ def admin_panel():
 
     if request.method == "POST":
         form_type = request.form.get("form_type")
+        wants_json = _wants_json_response()
+        success = True
+        message = None
+        payload: Dict[str, object] | None = None
         if form_type == "theory":
             _handle_create_theory(language)
         elif form_type == "test":
             _handle_create_test(language)
+        elif form_type == "update_theory":
+            _handle_update_theory(language)
+        elif form_type == "update_test":
+            _handle_update_test(language)
         elif form_type == "question":
             _handle_create_question(language)
         elif form_type == "create_user":
             _handle_create_user(language)
         elif form_type == "block_user":
-            _handle_toggle_user_block(language, block=True)
+            success, message, payload = _handle_toggle_user_block(language, block=True)
         elif form_type == "unblock_user":
-            _handle_toggle_user_block(language, block=False)
+            success, message, payload = _handle_toggle_user_block(language, block=False)
         elif form_type == "set_policy":
-            _handle_set_password_policy(language)
+            success, message, payload = _handle_set_password_policy(language)
+
+        if wants_json:
+            response_body: Dict[str, object] = {"success": success}
+            if message:
+                response_body["message"] = message
+            if payload:
+                response_body.update(payload)
+            status_code = 200 if success else 400
+            return jsonify(response_body), status_code
+
+        if message:
+            flash(message)
         return redirect(url_for("main.admin_panel"))
 
+    theories = Theory.query.order_by(Theory.created_at.desc()).all()
     tests = Test.query.order_by(Test.created_at.desc()).all()
     users = User.query.order_by(User.username).all()
     algorithm_choices = encryption_manager.as_choices(language)
@@ -428,6 +493,7 @@ def admin_panel():
     return render_template(
         "admin.html",
         language=language,
+        theories=theories,
         tests=tests,
         users=users,
         algorithms=algorithm_choices,
@@ -472,6 +538,58 @@ def _handle_create_test(language: str) -> None:
     db.session.add(test)
     db.session.commit()
     flash(translate("test_created", language))
+
+
+def _handle_update_theory(language: str) -> None:
+    theory_id = request.form.get("theory_id")
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+    item_language = request.form.get("language") or language
+
+    if not theory_id or not title or not content:
+        flash(translate("invalid_credentials", language))
+        return
+
+    try:
+        theory = Theory.query.get(int(theory_id))
+    except (TypeError, ValueError):
+        theory = None
+
+    if not theory:
+        flash(translate("invalid_credentials", language))
+        return
+
+    theory.title = title
+    theory.content = content
+    theory.language = item_language
+    db.session.commit()
+    flash(translate("theory_updated", language))
+
+
+def _handle_update_test(language: str) -> None:
+    test_id = request.form.get("test_id")
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    item_language = request.form.get("language") or language
+
+    if not test_id or not title or not description:
+        flash(translate("invalid_credentials", language))
+        return
+
+    try:
+        test = Test.query.get(int(test_id))
+    except (TypeError, ValueError):
+        test = None
+
+    if not test:
+        flash(translate("invalid_credentials", language))
+        return
+
+    test.title = title
+    test.description = description
+    test.language = item_language
+    db.session.commit()
+    flash(translate("test_updated", language))
 
 
 def _handle_create_question(language: str) -> None:
@@ -548,58 +666,104 @@ def _handle_create_user(language: str) -> None:
     flash(translate("user_created", language).format(username=username))
 
 
-def _handle_toggle_user_block(language: str, block: bool) -> None:
+def _handle_toggle_user_block(
+    language: str, block: bool
+) -> Tuple[bool, str | None, Dict[str, object] | None]:
     user_id = request.form.get("user_id")
     if not user_id:
-        flash(translate("invalid_credentials", language))
-        return
+        return False, translate("invalid_credentials", language), None
     try:
         target = User.query.get(int(user_id))
     except (TypeError, ValueError):
         target = None
     if not target:
-        flash(translate("invalid_credentials", language))
-        return
+        return False, translate("invalid_credentials", language), None
     if target.id == current_user.id:
-        flash(translate("cannot_block_self", language))
-        return
+        return False, translate("cannot_block_self", language), None
     target.is_blocked = block
     db.session.commit()
     if block:
-        flash(translate("user_blocked_admin", language).format(username=target.username))
+        message = translate("user_blocked_admin", language).format(
+            username=target.username
+        )
     else:
-        flash(translate("user_unblocked_admin", language).format(username=target.username))
+        message = translate("user_unblocked_admin", language).format(
+            username=target.username
+        )
+    status_text = (
+        translate("status_blocked", language)
+        if block
+        else translate("status_active", language)
+    )
+    policy_label = (
+        translate(PASSWORD_POLICIES[target.password_policy]["label"], language)
+        if target.password_policy
+        else translate("password_policy_none", language)
+    )
+    payload = {
+        "userId": target.id,
+        "isBlocked": block,
+        "statusText": status_text,
+        "statusClass": "blocked" if block else "active",
+        "nextActionLabel": translate(
+            "unblock_user" if block else "block_user", language
+        ),
+        "nextActionFormType": "unblock_user" if block else "block_user",
+        "nextActionStyle": "secondary" if block else "danger",
+        "mustChangePassword": target.must_change_password,
+        "passwordWarning": translate("status_password_change_required", language),
+        "policyLabel": policy_label,
+    }
+    return True, message, payload
 
 
-def _handle_set_password_policy(language: str) -> None:
+def _handle_set_password_policy(
+    language: str,
+) -> Tuple[bool, str | None, Dict[str, object] | None]:
     user_id = request.form.get("user_id")
     policy_id = request.form.get("policy_id")
     if not user_id:
-        flash(translate("invalid_credentials", language))
-        return
+        return False, translate("invalid_credentials", language), None
     try:
         target = User.query.get(int(user_id))
     except (TypeError, ValueError):
         target = None
     if not target:
-        flash(translate("invalid_credentials", language))
-        return
+        return False, translate("invalid_credentials", language), None
 
     if policy_id == "none" or not policy_id:
         target.password_policy = None
         target.must_change_password = False
         db.session.commit()
-        flash(translate("password_policy_cleared", language).format(username=target.username))
-        return
+        message = translate("password_policy_cleared", language).format(
+            username=target.username
+        )
+        payload = {
+            "userId": target.id,
+            "policyLabel": translate("password_policy_none", language),
+            "requiresPasswordChange": False,
+            "passwordWarning": translate(
+                "status_password_change_required", language
+            ),
+        }
+        return True, message, payload
 
     if policy_id not in PASSWORD_POLICIES:
-        flash(translate("invalid_credentials", language))
-        return
+        return False, translate("invalid_credentials", language), None
 
     target.password_policy = policy_id
     target.must_change_password = True
     db.session.commit()
-    flash(translate("password_policy_updated", language).format(username=target.username))
+    message = translate("password_policy_updated", language).format(
+        username=target.username
+    )
+    payload = {
+        "userId": target.id,
+        "policyLabel": translate(PASSWORD_POLICIES[policy_id]["label"], language),
+        "requiresPasswordChange": True,
+        "passwordWarning": translate("status_password_change_required", language),
+    }
+    return True, message, payload
 @bp.route("/language/<lang_code>")
 def switch_language(lang_code: str):
     if lang_code in SUPPORTED_LANGUAGES:

@@ -1,160 +1,335 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="admin">
-    <h2>{{ t('admin_panel') }}</h2>
-    <div class="admin-grid">
-        <form method="post" class="form card">
-            <input type="hidden" name="form_type" value="theory">
-            <h3>{{ t('add_theory') }}</h3>
-            <label>{{ t('title') }}
-                <input type="text" name="title" required>
-            </label>
-            <label>{{ t('content') }}
-                <textarea name="content" rows="6" required></textarea>
-            </label>
-            <label>{{ t('language_label') }}
-                <select name="language">
-                    {% for code, name in language_choices %}
-                    <option value="{{ code }}">{{ name }}</option>
-                    {% endfor %}
-                    <option value="all">All</option>
-                </select>
-            </label>
-            <button class="button" type="submit">{{ t('create') }}</button>
-        </form>
+<section class="admin admin-workspace">
+    <div class="admin-shell">
+        <aside class="admin-nav floating-card">
+            <h2>{{ t('admin_panel') }}</h2>
+            <p class="muted subtle">{{ t('dashboard_description') }}</p>
+            <div class="admin-nav__buttons" role="tablist" aria-label="{{ t('admin_panel') }}">
+                <button type="button" class="admin-nav__button is-active" data-section-target="theories" role="tab" aria-selected="true">{{ t('manage_theories') }}</button>
+                <button type="button" class="admin-nav__button" data-section-target="tests" role="tab" aria-selected="false">{{ t('manage_tests') }}</button>
+                <button type="button" class="admin-nav__button" data-section-target="users" role="tab" aria-selected="false">{{ t('manage_users') }}</button>
+            </div>
+        </aside>
 
-        <form method="post" class="form card">
-            <input type="hidden" name="form_type" value="test">
-            <h3>{{ t('add_test') }}</h3>
-            <label>{{ t('title') }}
-                <input type="text" name="title" required>
-            </label>
-            <label>{{ t('description') }}
-                <textarea name="description" rows="4" required></textarea>
-            </label>
-            <label>{{ t('language_label') }}
-                <select name="language">
-                    {% for code, name in language_choices %}
-                    <option value="{{ code }}">{{ name }}</option>
-                    {% endfor %}
-                    <option value="all">All</option>
-                </select>
-            </label>
-            <button class="button" type="submit">{{ t('create') }}</button>
-        </form>
+        <div class="admin-main">
+            <section class="admin-section is-active" data-section="theories" role="tabpanel">
+                <header class="admin-section__header">
+                    <div>
+                        <h3>{{ t('manage_theories') }}</h3>
+                        <p class="muted subtle">{{ t('add_theory') }}</p>
+                    </div>
+                </header>
+                <div class="admin-section__split">
+                    <form method="post" class="form card floating-card">
+                        <input type="hidden" name="form_type" value="theory">
+                        <label>{{ t('title') }}
+                            <input type="text" name="title" required>
+                        </label>
+                        <label>{{ t('content') }}
+                            <textarea name="content" rows="6" required></textarea>
+                        </label>
+                        <label>{{ t('language_label') }}
+                            <select name="language">
+                                {% for code, name in language_choices %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                                <option value="all">All</option>
+                            </select>
+                        </label>
+                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
+                    </form>
+                    <div class="admin-collection">
+                        {% if theories %}
+                            {% for theory in theories %}
+                            <article class="collection-item floating-card">
+                                <div class="collection-item__header">
+                                    <div>
+                                        <h4>{{ theory.title }}</h4>
+                                        <span class="muted subtle">{{ t('theory_created_at') }}: {{ theory.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    </div>
+                                    <span class="badge">{{ theory.language|upper }}</span>
+                                </div>
+                                <details class="collection-item__details">
+                                    <summary>{{ t('edit') }}</summary>
+                                    <form method="post" class="form inline-form">
+                                        <input type="hidden" name="form_type" value="update_theory">
+                                        <input type="hidden" name="theory_id" value="{{ theory.id }}">
+                                        <label>{{ t('title') }}
+                                            <input type="text" name="title" value="{{ theory.title }}" required>
+                                        </label>
+                                        <label>{{ t('content') }}
+                                            <textarea name="content" rows="6" required>{{ theory.content }}</textarea>
+                                        </label>
+                                        <label>{{ t('language_label') }}
+                                            <select name="language">
+                                                {% for code, name in language_choices %}
+                                                <option value="{{ code }}" {% if theory.language == code %}selected{% endif %}>{{ name }}</option>
+                                                {% endfor %}
+                                                <option value="all" {% if theory.language == 'all' %}selected{% endif %}>All</option>
+                                            </select>
+                                        </label>
+                                        <button class="button glow" type="submit">{{ t('save_changes') }}</button>
+                                    </form>
+                                </details>
+                            </article>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state floating-card">
+                                <p>{{ t('no_items') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
 
-        <form method="post" class="form card">
-            <input type="hidden" name="form_type" value="question">
-            <h3>{{ t('add_question') }}</h3>
-            <label>{{ t('select_test') }}
-                <select name="test_id" required>
-                    <option value="" disabled selected>--</option>
-                    {% for test in tests %}
-                    <option value="{{ test.id }}">{{ test.title }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>{{ t('question') }}
-                <textarea name="prompt" rows="3" required></textarea>
-            </label>
-            <label>{{ t('options') }}
-                <textarea name="options" rows="3" placeholder="{{ t('options_hint') }}" required></textarea>
-            </label>
-            <label>{{ t('correct_option_index') }}
-                <input type="number" min="1" name="correct_index" required>
-            </label>
-            <button class="button" type="submit">{{ t('create') }}</button>
-        </form>
+            <section class="admin-section" data-section="tests" hidden role="tabpanel">
+                <header class="admin-section__header">
+                    <div>
+                        <h3>{{ t('manage_tests') }}</h3>
+                        <p class="muted subtle">{{ t('add_test') }}</p>
+                    </div>
+                </header>
+                <div class="admin-section__split">
+                    <form method="post" class="form card floating-card">
+                        <input type="hidden" name="form_type" value="test">
+                        <label>{{ t('title') }}
+                            <input type="text" name="title" required>
+                        </label>
+                        <label>{{ t('description') }}
+                            <textarea name="description" rows="4" required></textarea>
+                        </label>
+                        <label>{{ t('language_label') }}
+                            <select name="language">
+                                {% for code, name in language_choices %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                                <option value="all">All</option>
+                            </select>
+                        </label>
+                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
+                    </form>
+                    <div class="admin-collection">
+                        {% if tests %}
+                            {% for test in tests %}
+                            <article class="collection-item floating-card">
+                                <div class="collection-item__header">
+                                    <div>
+                                        <h4>{{ test.title }}</h4>
+                                        <span class="muted subtle">{{ t('created_at') }}: {{ test.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    </div>
+                                    <span class="badge">{{ test.language|upper }}</span>
+                                </div>
+                                <details class="collection-item__details">
+                                    <summary>{{ t('edit') }}</summary>
+                                    <form method="post" class="form inline-form">
+                                        <input type="hidden" name="form_type" value="update_test">
+                                        <input type="hidden" name="test_id" value="{{ test.id }}">
+                                        <label>{{ t('title') }}
+                                            <input type="text" name="title" value="{{ test.title }}" required>
+                                        </label>
+                                        <label>{{ t('description') }}
+                                            <textarea name="description" rows="4" required>{{ test.description }}</textarea>
+                                        </label>
+                                        <label>{{ t('language_label') }}
+                                            <select name="language">
+                                                {% for code, name in language_choices %}
+                                                <option value="{{ code }}" {% if test.language == code %}selected{% endif %}>{{ name }}</option>
+                                                {% endfor %}
+                                                <option value="all" {% if test.language == 'all' %}selected{% endif %}>All</option>
+                                            </select>
+                                        </label>
+                                        <button class="button glow" type="submit">{{ t('save_changes') }}</button>
+                                    </form>
+                                </details>
+                            </article>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state floating-card">
+                                <p>{{ t('no_items') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
 
-        <form method="post" class="form card">
-            <input type="hidden" name="form_type" value="create_user">
-            <h3>{{ t('add_user') }}</h3>
-            <label>{{ t('username') }}
-                <input type="text" name="username" required>
-            </label>
-            <label>{{ t('password') }}
-                <input type="password" name="password" required>
-            </label>
-            <label>{{ t('password_confirm') }}
-                <input type="password" name="confirm_password" required>
-            </label>
-            <label>{{ t('encryption_algorithm') }}
-                <select name="algorithm" required>
-                    <option value="" disabled selected>--</option>
-                    {% for algorithm in algorithms %}
-                    <option value="{{ algorithm.id }}">{{ algorithm.name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>{{ t('encryption_key') }}
-                <input type="text" name="encryption_key" placeholder="{{ t('encryption_key_optional_notice') }}">
-            </label>
-            <button class="button" type="submit">{{ t('create') }}</button>
-        </form>
-    </div>
+                <div class="admin-section__footer">
+                    <form method="post" class="form card floating-card">
+                        <input type="hidden" name="form_type" value="question">
+                        <h4>{{ t('add_question') }}</h4>
+                        <label>{{ t('select_test') }}
+                            <select name="test_id" required>
+                                <option value="" disabled selected>--</option>
+                                {% for test in tests %}
+                                <option value="{{ test.id }}">{{ test.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>{{ t('question') }}
+                            <textarea name="prompt" rows="3" required></textarea>
+                        </label>
+                        <label>{{ t('options') }}
+                            <textarea name="options" rows="3" placeholder="{{ t('options_hint') }}" required></textarea>
+                        </label>
+                        <label>{{ t('correct_option_index') }}
+                            <input type="number" min="1" name="correct_index" required>
+                        </label>
+                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
+                    </form>
+                </div>
+            </section>
 
-    <div class="card user-management">
-        <h3>{{ t('user_management') }}</h3>
-        <div class="user-table-wrapper">
-            <table class="user-table">
-                <thead>
-                    <tr>
-                        <th>{{ t('username') }}</th>
-                        <th>{{ t('status') }}</th>
-                        <th>{{ t('password_policy') }}</th>
-                        <th>{{ t('actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>
-                            {{ user.username }}
-                            {% if user.is_admin %}
-                                <span class="badge">{{ t('admin_panel') }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if user.is_blocked %}
-                                <span class="status blocked">{{ t('status_blocked') }}</span>
-                            {% else %}
-                                <span class="status active">{{ t('status_active') }}</span>
-                            {% endif %}
-                            {% if user.must_change_password %}
-                                <div class="status warning">{{ t('status_password_change_required') }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ policy_labels.get(user.password_policy) or t('password_policy_none') }}
-                        </td>
-                        <td class="actions">
-                            <form method="post">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                {% if user.is_blocked %}
-                                <input type="hidden" name="form_type" value="unblock_user">
-                                <button class="button secondary" type="submit">{{ t('unblock_user') }}</button>
-                                {% else %}
-                                <input type="hidden" name="form_type" value="block_user">
-                                <button class="button danger" type="submit">{{ t('block_user') }}</button>
-                                {% endif %}
-                            </form>
-                            <form method="post" class="policy-form">
-                                <input type="hidden" name="form_type" value="set_policy">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <select name="policy_id">
-                                    <option value="none" {% if not user.password_policy %}selected{% endif %}>{{ t('password_policy_none') }}</option>
-                                    {% for policy_id, label in policy_choices %}
-                                    <option value="{{ policy_id }}" {% if user.password_policy == policy_id %}selected{% endif %}>{{ label }}</option>
+            <section class="admin-section" data-section="users" hidden role="tabpanel">
+                <header class="admin-section__header">
+                    <div>
+                        <h3>{{ t('manage_users') }}</h3>
+                        <p class="muted subtle">{{ t('add_user') }}</p>
+                    </div>
+                </header>
+                <div class="admin-section__split admin-section__split--users">
+                    <form method="post" class="form card floating-card">
+                        <input type="hidden" name="form_type" value="create_user">
+                        <label>{{ t('username') }}
+                            <input type="text" name="username" required>
+                        </label>
+                        <label>{{ t('password') }}
+                            <input type="password" name="password" required>
+                        </label>
+                        <label>{{ t('password_confirm') }}
+                            <input type="password" name="confirm_password" required>
+                        </label>
+                        <label>{{ t('encryption_algorithm') }}
+                            <select name="algorithm" required>
+                                <option value="" disabled selected>--</option>
+                                {% for algorithm in algorithms %}
+                                <option value="{{ algorithm.id }}">{{ algorithm.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>{{ t('encryption_key') }}
+                            <input type="text" name="encryption_key" placeholder="{{ t('encryption_key_optional_notice') }}">
+                        </label>
+                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
+                    </form>
+                    <div class="card floating-card user-management">
+                        <div class="user-management__header">
+                            <label class="user-search">
+                                <span>{{ t('search_users') }}</span>
+                                <input type="search" id="user-search" placeholder="{{ t('search_users_placeholder') }}" autocomplete="off">
+                            </label>
+                        </div>
+                        <div class="user-table-wrapper">
+                            <table class="user-table" data-user-table>
+                                <thead>
+                                    <tr>
+                                        <th>{{ t('username') }}</th>
+                                        <th>{{ t('status') }}</th>
+                                        <th>{{ t('password_policy') }}</th>
+                                        <th>{{ t('actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr data-user-id="{{ user.id }}" data-username="{{ user.username|lower }}">
+                                        <td>
+                                            <div class="user-primary">
+                                                <span class="user-name">{{ user.username }}</span>
+                                                {% if user.is_admin %}
+                                                <span class="badge">{{ t('admin_panel') }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="user-status" data-user-status>
+                                            <span class="status-pill {% if user.is_blocked %}blocked{% else %}active{% endif %}" data-status-label>
+                                                {% if user.is_blocked %}
+                                                    {{ t('status_blocked') }}
+                                                {% else %}
+                                                    {{ t('status_active') }}
+                                                {% endif %}
+                                            </span>
+                                            <span class="status-note{% if not user.must_change_password %} hidden{% endif %}" data-password-warning>
+                                                {{ t('status_password_change_required') }}
+                                            </span>
+                                        </td>
+                                        <td class="user-policy">
+                                            <span class="policy-chip" data-policy-label>
+                                                {{ policy_labels.get(user.password_policy) or t('password_policy_none') }}
+                                            </span>
+                                        </td>
+                                        <td class="actions">
+                                            <form method="post" data-async="toggle-block" class="action-inline">
+                                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                {% if user.is_blocked %}
+                                                <input type="hidden" name="form_type" value="unblock_user">
+                                                <button class="button secondary" type="submit">{{ t('unblock_user') }}</button>
+                                                {% else %}
+                                                <input type="hidden" name="form_type" value="block_user">
+                                                <button class="button danger" type="submit">{{ t('block_user') }}</button>
+                                                {% endif %}
+                                            </form>
+                                            <form method="post" class="policy-form">
+                                                <input type="hidden" name="form_type" value="set_policy">
+                                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                <select name="policy_id">
+                                                    <option value="none" {% if not user.password_policy %}selected{% endif %}>{{ t('password_policy_none') }}</option>
+                                                    {% for policy_id, label in policy_choices %}
+                                                    <option value="{{ policy_id }}" {% if user.password_policy == policy_id %}selected{% endif %}>{{ label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button class="button secondary" type="submit">{{ t('apply_policy') }}</button>
+                                            </form>
+                                        </td>
+                                    </tr>
                                     {% endfor %}
-                                </select>
-                                <button class="button secondary" type="submit">{{ t('apply_policy') }}</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+(function () {
+    const navButtons = document.querySelectorAll('.admin-nav__button');
+    const sections = document.querySelectorAll('.admin-section');
+
+    const activateSection = (target) => {
+        sections.forEach((section) => {
+            const isTarget = section.dataset.section === target;
+            section.classList.toggle('is-active', isTarget);
+            section.toggleAttribute('hidden', !isTarget);
+        });
+        navButtons.forEach((button) => {
+            const isTarget = button.dataset.sectionTarget === target;
+            button.classList.toggle('is-active', isTarget);
+            button.setAttribute('aria-selected', String(isTarget));
+        });
+    };
+
+    navButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            activateSection(button.dataset.sectionTarget);
+        });
+    });
+
+    const searchInput = document.getElementById('user-search');
+    if (searchInput) {
+        const rows = document.querySelectorAll('[data-user-table] tbody tr');
+        const filterUsers = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            rows.forEach((row) => {
+                const username = row.dataset.username || '';
+                const matches = !query || username.includes(query);
+                row.classList.toggle('is-hidden', !matches);
+            });
+        };
+        searchInput.addEventListener('input', filterUsers);
+    }
+})();
+</script>
 {% endblock %}
