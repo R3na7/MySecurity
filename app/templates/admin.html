@@ -663,3 +663,46 @@
 })();
 </script>
 {% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+(function () {
+    const navButtons = document.querySelectorAll('.admin-nav__button');
+    const sections = document.querySelectorAll('.admin-section');
+
+    const activateSection = (target) => {
+        sections.forEach((section) => {
+            const isTarget = section.dataset.section === target;
+            section.classList.toggle('is-active', isTarget);
+            section.toggleAttribute('hidden', !isTarget);
+        });
+        navButtons.forEach((button) => {
+            const isTarget = button.dataset.sectionTarget === target;
+            button.classList.toggle('is-active', isTarget);
+            button.setAttribute('aria-selected', String(isTarget));
+        });
+    };
+
+    navButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            activateSection(button.dataset.sectionTarget);
+        });
+    });
+
+    const searchInput = document.getElementById('user-search');
+    if (searchInput) {
+        const rows = document.querySelectorAll('[data-user-table] tbody tr');
+        const filterUsers = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            rows.forEach((row) => {
+                const username = row.dataset.username || '';
+                const matches = !query || username.includes(query);
+                row.classList.toggle('is-hidden', !matches);
+            });
+        };
+        searchInput.addEventListener('input', filterUsers);
+    }
+})();
+</script>
+{% endblock %}
