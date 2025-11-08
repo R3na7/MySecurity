@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 import re
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from flask import (
     Blueprint,
@@ -460,8 +460,10 @@ def admin_panel():
             _handle_update_theory(language)
         elif form_type == "update_test":
             _handle_update_test(language)
-        elif form_type == "question":
-            _handle_create_question(language)
+        elif form_type == "add_questions":
+            _handle_add_questions(language)
+        elif form_type == "delete_question":
+            _handle_delete_question(language)
         elif form_type == "create_user":
             _handle_create_user(language)
         elif form_type == "block_user":
@@ -521,12 +523,66 @@ def _handle_create_theory(language: str) -> None:
     flash(translate("theory_created", language))
 
 
+def _load_questions_payload(
+    language: str,
+) -> Tuple[List[Dict[str, Any]], str | None]:
+    payload = request.form.get("questions_payload")
+    if not payload:
+        return [], translate("builder_questions_required", language)
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return [], translate("invalid_credentials", language)
+    if not isinstance(data, list):
+        return [], translate("invalid_credentials", language)
+
+    questions: List[Dict[str, Any]] = []
+    for item in data:
+        if not isinstance(item, dict):
+            return [], translate("invalid_credentials", language)
+        prompt = str(item.get("prompt", "")).strip()
+        if not prompt:
+            return [], translate("builder_prompt_required", language)
+        options_raw = item.get("options")
+        if not isinstance(options_raw, list):
+            return [], translate("invalid_credentials", language)
+        options: List[str] = []
+        for raw in options_raw:
+            option_text = str(raw).strip()
+            if not option_text:
+                return [], translate("builder_options_required", language)
+            options.append(option_text)
+        if len(options) < 2:
+            return [], translate("builder_options_required", language)
+        correct_raw = item.get("correct_index")
+        try:
+            correct_index = int(correct_raw)
+        except (TypeError, ValueError):
+            return [], translate("builder_correct_required", language)
+        if correct_index < 0 or correct_index >= len(options):
+            return [], translate("builder_correct_required", language)
+        questions.append(
+            {
+                "prompt": prompt,
+                "options": options,
+                "correct_index": correct_index,
+            }
+        )
+    if not questions:
+        return [], translate("builder_questions_required", language)
+    return questions, None
+
+
 def _handle_create_test(language: str) -> None:
     title = request.form.get("title", "").strip()
     description = request.form.get("description", "").strip()
     item_language = request.form.get("language") or language
     if not title or not description:
         flash(translate("invalid_credentials", language))
+        return
+    questions, error = _load_questions_payload(language)
+    if error:
+        flash(error)
         return
     test = Test(
         title=title,
@@ -536,6 +592,17 @@ def _handle_create_test(language: str) -> None:
         created_at=datetime.utcnow(),
     )
     db.session.add(test)
+    for question in questions:
+        db.session.add(
+            TestQuestion(
+                test=test,
+                prompt=question["prompt"],
+                options_json=json.dumps(
+                    question["options"], ensure_ascii=False
+                ),
+                correct_index=question["correct_index"],
+            )
+        )
     db.session.commit()
     flash(translate("test_created", language))
 
@@ -592,12 +659,9 @@ def _handle_update_test(language: str) -> None:
     flash(translate("test_updated", language))
 
 
-def _handle_create_question(language: str) -> None:
+def _handle_add_questions(language: str) -> None:
     test_id = request.form.get("test_id")
-    prompt = request.form.get("prompt", "").strip()
-    options_raw = request.form.get("options", "")
-    correct_index_raw = request.form.get("correct_index", "")
-    if not test_id or not prompt or not options_raw or not correct_index_raw:
+    if not test_id:
         flash(translate("invalid_credentials", language))
         return
     try:
@@ -607,27 +671,40 @@ def _handle_create_question(language: str) -> None:
     if not test:
         flash(translate("invalid_credentials", language))
         return
-    options = [opt.strip() for opt in options_raw.split(";") if opt.strip()]
-    if len(options) < 2:
+    questions, error = _load_questions_payload(language)
+    if error:
+        flash(error)
+        return
+    for question in questions:
+        db.session.add(
+            TestQuestion(
+                test=test,
+                prompt=question["prompt"],
+                options_json=json.dumps(
+                    question["options"], ensure_ascii=False
+                ),
+                correct_index=question["correct_index"],
+            )
+        )
+    db.session.commit()
+    flash(translate("questions_added", language))
+
+
+def _handle_delete_question(language: str) -> None:
+    question_id = request.form.get("question_id")
+    if not question_id:
         flash(translate("invalid_credentials", language))
         return
     try:
-        correct_index = int(correct_index_raw) - 1
-    except ValueError:
+        question = TestQuestion.query.get(int(question_id))
+    except (TypeError, ValueError):
+        question = None
+    if not question:
         flash(translate("invalid_credentials", language))
         return
-    if correct_index < 0 or correct_index >= len(options):
-        flash(translate("invalid_credentials", language))
-        return
-    question = TestQuestion(
-        test=test,
-        prompt=prompt,
-        options_json=json.dumps(options),
-        correct_index=correct_index,
-    )
-    db.session.add(question)
+    db.session.delete(question)
     db.session.commit()
-    flash(translate("question_created", language))
+    flash(translate("question_removed", language))
 
 
 def _handle_create_user(language: str) -> None:

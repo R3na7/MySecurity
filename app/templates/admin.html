@@ -17,17 +17,65 @@
                 <header class="admin-section__header">
                     <div>
                         <h3>{{ t('manage_theories') }}</h3>
-                        <p class="muted subtle">{{ t('add_theory') }}</p>
+                        <p class="muted subtle">{{ t('theory_overview_hint') }}</p>
+                    </div>
+                    <div class="admin-section__actions">
+                        <button type="button" class="button glow" data-section-action="open-form">{{ t('add_theory') }}</button>
                     </div>
                 </header>
-                <div class="admin-section__split">
-                    <form method="post" class="form card floating-card">
+                <div class="admin-section__body" data-view="list">
+                    {% if theories %}
+                    <div class="admin-collection admin-collection--stack">
+                        {% for theory in theories %}
+                        <article class="collection-item floating-card">
+                            <div class="collection-item__header">
+                                <div>
+                                    <h4>{{ theory.title }}</h4>
+                                    <span class="muted subtle">{{ t('theory_created_at') }}: {{ theory.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                </div>
+                                <span class="badge">{{ theory.language|upper }}</span>
+                            </div>
+                            <details class="collection-item__details">
+                                <summary>{{ t('edit') }}</summary>
+                                <form method="post" class="form inline-form">
+                                    <input type="hidden" name="form_type" value="update_theory">
+                                    <input type="hidden" name="theory_id" value="{{ theory.id }}">
+                                    <label>{{ t('title') }}
+                                        <input type="text" name="title" value="{{ theory.title }}" required>
+                                    </label>
+                                    <label>{{ t('content') }}
+                                        <textarea name="content" rows="10" required>{{ theory.content }}</textarea>
+                                    </label>
+                                    <label>{{ t('language_label') }}
+                                        <select name="language">
+                                            {% for code, name in language_choices %}
+                                            <option value="{{ code }}" {% if theory.language == code %}selected{% endif %}>{{ name }}</option>
+                                            {% endfor %}
+                                            <option value="all" {% if theory.language == 'all' %}selected{% endif %}>All</option>
+                                        </select>
+                                    </label>
+                                    <button class="button glow" type="submit">{{ t('save_changes') }}</button>
+                                </form>
+                            </details>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state floating-card">
+                        <p>{{ t('no_items') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="admin-section__body admin-section__body--form" data-view="form" hidden>
+                    <form method="post" class="form card floating-card form--wide">
                         <input type="hidden" name="form_type" value="theory">
+                        <h4>{{ t('add_theory') }}</h4>
+                        <p class="muted subtle">{{ t('theory_form_hint') }}</p>
                         <label>{{ t('title') }}
                             <input type="text" name="title" required>
                         </label>
                         <label>{{ t('content') }}
-                            <textarea name="content" rows="6" required></textarea>
+                            <textarea name="content" rows="14" required></textarea>
                         </label>
                         <label>{{ t('language_label') }}
                             <select name="language">
@@ -37,49 +85,11 @@
                                 <option value="all">All</option>
                             </select>
                         </label>
-                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
+                        <div class="form-actions">
+                            <button class="button glow" type="submit">{{ t('create') }}</button>
+                            <button class="button secondary" type="button" data-section-action="close-form">{{ t('back_to_list') }}</button>
+                        </div>
                     </form>
-                    <div class="admin-collection">
-                        {% if theories %}
-                            {% for theory in theories %}
-                            <article class="collection-item floating-card">
-                                <div class="collection-item__header">
-                                    <div>
-                                        <h4>{{ theory.title }}</h4>
-                                        <span class="muted subtle">{{ t('theory_created_at') }}: {{ theory.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
-                                    </div>
-                                    <span class="badge">{{ theory.language|upper }}</span>
-                                </div>
-                                <details class="collection-item__details">
-                                    <summary>{{ t('edit') }}</summary>
-                                    <form method="post" class="form inline-form">
-                                        <input type="hidden" name="form_type" value="update_theory">
-                                        <input type="hidden" name="theory_id" value="{{ theory.id }}">
-                                        <label>{{ t('title') }}
-                                            <input type="text" name="title" value="{{ theory.title }}" required>
-                                        </label>
-                                        <label>{{ t('content') }}
-                                            <textarea name="content" rows="6" required>{{ theory.content }}</textarea>
-                                        </label>
-                                        <label>{{ t('language_label') }}
-                                            <select name="language">
-                                                {% for code, name in language_choices %}
-                                                <option value="{{ code }}" {% if theory.language == code %}selected{% endif %}>{{ name }}</option>
-                                                {% endfor %}
-                                                <option value="all" {% if theory.language == 'all' %}selected{% endif %}>All</option>
-                                            </select>
-                                        </label>
-                                        <button class="button glow" type="submit">{{ t('save_changes') }}</button>
-                                    </form>
-                                </details>
-                            </article>
-                            {% endfor %}
-                        {% else %}
-                            <div class="empty-state floating-card">
-                                <p>{{ t('no_items') }}</p>
-                            </div>
-                        {% endif %}
-                    </div>
                 </div>
             </section>
 
@@ -87,17 +97,112 @@
                 <header class="admin-section__header">
                     <div>
                         <h3>{{ t('manage_tests') }}</h3>
-                        <p class="muted subtle">{{ t('add_test') }}</p>
+                        <p class="muted subtle">{{ t('tests_overview_hint') }}</p>
+                    </div>
+                    <div class="admin-section__actions">
+                        <button type="button" class="button glow" data-section-action="open-form">{{ t('add_test') }}</button>
                     </div>
                 </header>
-                <div class="admin-section__split">
-                    <form method="post" class="form card floating-card">
+                <div class="admin-section__body" data-view="list">
+                    {% if tests %}
+                    <div class="admin-collection admin-collection--stack">
+                        {% for test in tests %}
+                        <article class="collection-item floating-card test-card">
+                            <div class="collection-item__header">
+                                <div>
+                                    <h4>{{ test.title }}</h4>
+                                    <span class="muted subtle">{{ t('created_at') }}: {{ test.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                </div>
+                                <span class="badge">{{ test.language|upper }}</span>
+                            </div>
+                            <p class="muted subtle">{{ test.description }}</p>
+                            <div class="question-list">
+                                {% if test.questions %}
+                                {% for question in test.questions %}
+                                <article class="question-item" data-question-id="{{ question.id }}">
+                                    <div class="question-item__header">
+                                        <h5>{{ t('question') }} {{ loop.index }}</h5>
+                                        <form method="post" class="action-inline">
+                                            <input type="hidden" name="form_type" value="delete_question">
+                                            <input type="hidden" name="question_id" value="{{ question.id }}">
+                                            <button class="button subtle danger" type="submit">{{ t('remove_question') }}</button>
+                                        </form>
+                                    </div>
+                                    <p>{{ question.prompt }}</p>
+                                    <ul class="question-options-list">
+                                        {% for option in question.options() %}
+                                        <li class="question-option-line {% if loop.index0 == question.correct_index %}is-correct{% endif %}">
+                                            <span class="option-index">{{ loop.index }}.</span>
+                                            <span class="option-text">{{ option }}</span>
+                                            {% if loop.index0 == question.correct_index %}
+                                            <span class="option-badge">{{ t('mark_as_correct') }}</span>
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </article>
+                                {% endfor %}
+                                {% else %}
+                                <div class="empty-state compact">
+                                    <p>{{ t('no_questions_yet') }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <details class="collection-item__details">
+                                <summary>{{ t('edit') }}</summary>
+                                <form method="post" class="form inline-form">
+                                    <input type="hidden" name="form_type" value="update_test">
+                                    <input type="hidden" name="test_id" value="{{ test.id }}">
+                                    <label>{{ t('title') }}
+                                        <input type="text" name="title" value="{{ test.title }}" required>
+                                    </label>
+                                    <label>{{ t('description') }}
+                                        <textarea name="description" rows="6" required>{{ test.description }}</textarea>
+                                    </label>
+                                    <label>{{ t('language_label') }}
+                                        <select name="language">
+                                            {% for code, name in language_choices %}
+                                            <option value="{{ code }}" {% if test.language == code %}selected{% endif %}>{{ name }}</option>
+                                            {% endfor %}
+                                            <option value="all" {% if test.language == 'all' %}selected{% endif %}>All</option>
+                                        </select>
+                                    </label>
+                                    <button class="button glow" type="submit">{{ t('save_changes') }}</button>
+                                </form>
+                                <div class="question-management">
+                                    <h5>{{ t('add_new_question') }}</h5>
+                                    <form method="post" class="form question-inline-form" data-question-builder="single" data-error-empty-prompt="{{ t('builder_prompt_required') }}" data-error-options="{{ t('builder_options_required') }}" data-error-correct="{{ t('builder_correct_required') }}" data-error-questions="{{ t('builder_questions_required') }}">
+                                        <input type="hidden" name="form_type" value="add_questions">
+                                        <input type="hidden" name="test_id" value="{{ test.id }}">
+                                        <input type="hidden" name="questions_payload" data-questions-field>
+                                        <div class="form-error" data-builder-error hidden></div>
+                                        <div class="question-builder" data-questions></div>
+                                        <p class="muted subtle" data-question-hint>{{ t('question_builder_hint') }}</p>
+                                        <div class="form-actions">
+                                            <button class="button glow" type="submit">{{ t('add_question') }}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </details>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state floating-card">
+                        <p>{{ t('no_items') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="admin-section__body admin-section__body--form" data-view="form" hidden>
+                    <form method="post" class="form card floating-card form--wide" data-question-builder="multi" data-error-empty-prompt="{{ t('builder_prompt_required') }}" data-error-options="{{ t('builder_options_required') }}" data-error-correct="{{ t('builder_correct_required') }}" data-error-questions="{{ t('builder_questions_required') }}">
                         <input type="hidden" name="form_type" value="test">
+                        <h4>{{ t('add_test') }}</h4>
+                        <p class="muted subtle">{{ t('tests_form_hint') }}</p>
                         <label>{{ t('title') }}
                             <input type="text" name="title" required>
                         </label>
                         <label>{{ t('description') }}
-                            <textarea name="description" rows="4" required></textarea>
+                            <textarea name="description" rows="6" required></textarea>
                         </label>
                         <label>{{ t('language_label') }}
                             <select name="language">
@@ -107,73 +212,17 @@
                                 <option value="all">All</option>
                             </select>
                         </label>
-                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
-                    </form>
-                    <div class="admin-collection">
-                        {% if tests %}
-                            {% for test in tests %}
-                            <article class="collection-item floating-card">
-                                <div class="collection-item__header">
-                                    <div>
-                                        <h4>{{ test.title }}</h4>
-                                        <span class="muted subtle">{{ t('created_at') }}: {{ test.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
-                                    </div>
-                                    <span class="badge">{{ test.language|upper }}</span>
-                                </div>
-                                <details class="collection-item__details">
-                                    <summary>{{ t('edit') }}</summary>
-                                    <form method="post" class="form inline-form">
-                                        <input type="hidden" name="form_type" value="update_test">
-                                        <input type="hidden" name="test_id" value="{{ test.id }}">
-                                        <label>{{ t('title') }}
-                                            <input type="text" name="title" value="{{ test.title }}" required>
-                                        </label>
-                                        <label>{{ t('description') }}
-                                            <textarea name="description" rows="4" required>{{ test.description }}</textarea>
-                                        </label>
-                                        <label>{{ t('language_label') }}
-                                            <select name="language">
-                                                {% for code, name in language_choices %}
-                                                <option value="{{ code }}" {% if test.language == code %}selected{% endif %}>{{ name }}</option>
-                                                {% endfor %}
-                                                <option value="all" {% if test.language == 'all' %}selected{% endif %}>All</option>
-                                            </select>
-                                        </label>
-                                        <button class="button glow" type="submit">{{ t('save_changes') }}</button>
-                                    </form>
-                                </details>
-                            </article>
-                            {% endfor %}
-                        {% else %}
-                            <div class="empty-state floating-card">
-                                <p>{{ t('no_items') }}</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="admin-section__footer">
-                    <form method="post" class="form card floating-card">
-                        <input type="hidden" name="form_type" value="question">
-                        <h4>{{ t('add_question') }}</h4>
-                        <label>{{ t('select_test') }}
-                            <select name="test_id" required>
-                                <option value="" disabled selected>--</option>
-                                {% for test in tests %}
-                                <option value="{{ test.id }}">{{ test.title }}</option>
-                                {% endfor %}
-                            </select>
-                        </label>
-                        <label>{{ t('question') }}
-                            <textarea name="prompt" rows="3" required></textarea>
-                        </label>
-                        <label>{{ t('options') }}
-                            <textarea name="options" rows="3" placeholder="{{ t('options_hint') }}" required></textarea>
-                        </label>
-                        <label>{{ t('correct_option_index') }}
-                            <input type="number" min="1" name="correct_index" required>
-                        </label>
-                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
+                        <input type="hidden" name="questions_payload" data-questions-field>
+                        <div class="form-error" data-builder-error hidden></div>
+                        <div class="question-builder" data-questions></div>
+                        <p class="muted subtle" data-question-hint>{{ t('question_builder_hint') }}</p>
+                        <div class="question-builder__actions">
+                            <button class="button secondary" type="button" data-add-question>{{ t('add_another_question') }}</button>
+                        </div>
+                        <div class="form-actions">
+                            <button class="button glow" type="submit">{{ t('create') }}</button>
+                            <button class="button secondary" type="button" data-section-action="close-form">{{ t('back_to_list') }}</button>
+                        </div>
                     </form>
                 </div>
             </section>
@@ -182,34 +231,13 @@
                 <header class="admin-section__header">
                     <div>
                         <h3>{{ t('manage_users') }}</h3>
-                        <p class="muted subtle">{{ t('add_user') }}</p>
+                        <p class="muted subtle">{{ t('users_overview_hint') }}</p>
+                    </div>
+                    <div class="admin-section__actions">
+                        <button type="button" class="button glow" data-section-action="open-form">{{ t('add_user') }}</button>
                     </div>
                 </header>
-                <div class="admin-section__split admin-section__split--users">
-                    <form method="post" class="form card floating-card">
-                        <input type="hidden" name="form_type" value="create_user">
-                        <label>{{ t('username') }}
-                            <input type="text" name="username" required>
-                        </label>
-                        <label>{{ t('password') }}
-                            <input type="password" name="password" required>
-                        </label>
-                        <label>{{ t('password_confirm') }}
-                            <input type="password" name="confirm_password" required>
-                        </label>
-                        <label>{{ t('encryption_algorithm') }}
-                            <select name="algorithm" required>
-                                <option value="" disabled selected>--</option>
-                                {% for algorithm in algorithms %}
-                                <option value="{{ algorithm.id }}">{{ algorithm.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </label>
-                        <label>{{ t('encryption_key') }}
-                            <input type="text" name="encryption_key" placeholder="{{ t('encryption_key_optional_notice') }}">
-                        </label>
-                        <button class="button full-width glow" type="submit">{{ t('create') }}</button>
-                    </form>
+                <div class="admin-section__body" data-view="list">
                     <div class="card floating-card user-management">
                         <div class="user-management__header">
                             <label class="user-search">
@@ -285,10 +313,355 @@
                         </div>
                     </div>
                 </div>
+                <div class="admin-section__body admin-section__body--form" data-view="form" hidden>
+                    <form method="post" class="form card floating-card form--wide">
+                        <input type="hidden" name="form_type" value="create_user">
+                        <h4>{{ t('add_user') }}</h4>
+                        <p class="muted subtle">{{ t('users_form_hint') }}</p>
+                        <label>{{ t('username') }}
+                            <input type="text" name="username" required>
+                        </label>
+                        <label>{{ t('password') }}
+                            <input type="password" name="password" required>
+                        </label>
+                        <label>{{ t('password_confirm') }}
+                            <input type="password" name="confirm_password" required>
+                        </label>
+                        <label>{{ t('encryption_algorithm') }}
+                            <select name="algorithm" required>
+                                <option value="" disabled selected>--</option>
+                                {% for algorithm in algorithms %}
+                                <option value="{{ algorithm.id }}">{{ algorithm.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>{{ t('encryption_key') }}
+                            <input type="text" name="encryption_key" placeholder="{{ t('encryption_key_optional_notice') }}">
+                        </label>
+                        <div class="form-actions">
+                            <button class="button glow" type="submit">{{ t('create') }}</button>
+                            <button class="button secondary" type="button" data-section-action="close-form">{{ t('back_to_list') }}</button>
+                        </div>
+                    </form>
+                </div>
             </section>
         </div>
     </div>
 </section>
+
+<template id="admin-question-template">
+    <div class="question-card" data-question>
+        <div class="question-card__header">
+            <span class="question-card__title">{{ t('question') }} <span data-question-index></span></span>
+            <button type="button" class="button subtle danger" data-remove-question>{{ t('remove_question') }}</button>
+        </div>
+        <label>{{ t('question_prompt') }}
+            <textarea data-question-prompt rows="4" required></textarea>
+        </label>
+        <div class="question-options" data-options></div>
+        <button type="button" class="button secondary" data-add-option>{{ t('add_option') }}</button>
+    </div>
+</template>
+
+<template id="admin-option-template">
+    <div class="question-option" data-option>
+        <div class="question-option__row">
+            <input type="text" data-option-input required>
+            <button type="button" class="button subtle danger" data-remove-option>{{ t('remove_option') }}</button>
+        </div>
+        <label class="question-option__answer">
+            <input type="radio" data-option-correct>
+            <span>{{ t('mark_as_correct') }}</span>
+        </label>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+(function () {
+    const navButtons = document.querySelectorAll('.admin-nav__button');
+    const sections = document.querySelectorAll('.admin-section');
+
+    const activateSection = (target) => {
+        sections.forEach((section) => {
+            const isTarget = section.dataset.section === target;
+            section.classList.toggle('is-active', isTarget);
+            section.toggleAttribute('hidden', !isTarget);
+        });
+        navButtons.forEach((button) => {
+            const isTarget = button.dataset.sectionTarget === target;
+            button.classList.toggle('is-active', isTarget);
+            button.setAttribute('aria-selected', String(isTarget));
+        });
+    };
+
+    navButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            activateSection(button.dataset.sectionTarget);
+        });
+    });
+
+    sections.forEach((section) => {
+        const listView = section.querySelector('[data-view="list"]');
+        const formView = section.querySelector('[data-view="form"]');
+        if (!listView || !formView) {
+            return;
+        }
+        const toggleView = (showForm) => {
+            listView.toggleAttribute('hidden', showForm);
+            formView.toggleAttribute('hidden', !showForm);
+            section.classList.toggle('section-showing-form', showForm);
+        };
+        section.querySelectorAll('[data-section-action="open-form"]').forEach((button) => {
+            button.addEventListener('click', () => toggleView(true));
+        });
+        section.querySelectorAll('[data-section-action="close-form"]').forEach((button) => {
+            button.addEventListener('click', () => toggleView(false));
+        });
+    });
+
+    const searchInput = document.getElementById('user-search');
+    if (searchInput) {
+        const rows = document.querySelectorAll('[data-user-table] tbody tr');
+        const filterUsers = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            rows.forEach((row) => {
+                const username = row.dataset.username || '';
+                const matches = !query || username.includes(query);
+                row.classList.toggle('is-hidden', !matches);
+            });
+        };
+        searchInput.addEventListener('input', filterUsers);
+    }
+
+    const questionTemplate = document.getElementById('admin-question-template');
+    const optionTemplate = document.getElementById('admin-option-template');
+
+    if (questionTemplate && optionTemplate) {
+        class QuestionBuilder {
+            constructor(form) {
+                this.form = form;
+                this.mode = form.dataset.questionBuilder || 'multi';
+                this.questionsContainer = form.querySelector('[data-questions]');
+                this.payloadField = form.querySelector('[data-questions-field]');
+                this.errorField = form.querySelector('[data-builder-error]');
+                this.addQuestionButton = form.querySelector('[data-add-question]');
+                this.templates = {
+                    question: questionTemplate,
+                    option: optionTemplate,
+                };
+                this.init();
+            }
+
+            init() {
+                if (!this.questionsContainer || !this.payloadField) {
+                    return;
+                }
+                if (this.mode === 'single' && this.addQuestionButton) {
+                    this.addQuestionButton.hidden = true;
+                }
+                if (this.mode !== 'single' && this.addQuestionButton) {
+                    this.addQuestionButton.addEventListener('click', () => {
+                        this.addQuestion();
+                    });
+                }
+                this.addQuestion();
+                this.form.addEventListener('submit', (event) => {
+                    if (!this.serialize()) {
+                        event.preventDefault();
+                    }
+                });
+            }
+
+            addQuestion(data) {
+                if (this.mode === 'single' && this.questionsContainer.querySelector('[data-question]')) {
+                    return;
+                }
+                const fragment = this.templates.question.content.cloneNode(true);
+                const node = fragment.querySelector('[data-question]');
+                if (!node) {
+                    return;
+                }
+                const removeButton = node.querySelector('[data-remove-question]');
+                if (removeButton) {
+                    if (this.mode === 'single') {
+                        removeButton.remove();
+                    } else {
+                        removeButton.addEventListener('click', () => {
+                            node.remove();
+                            this.updateQuestionIndices();
+                        });
+                    }
+                }
+                const promptField = node.querySelector('[data-question-prompt]');
+                if (promptField && data && data.prompt) {
+                    promptField.value = data.prompt;
+                }
+                const optionValues = data && Array.isArray(data.options) ? data.options : [];
+                const initialOptions = Math.max(optionValues.length, 2);
+                for (let index = 0; index < initialOptions; index += 1) {
+                    const text = optionValues[index] || '';
+                    this.addOption(node, text);
+                }
+                const radios = node.querySelectorAll('[data-option-correct]');
+                if (data && typeof data.correct_index === 'number' && radios[data.correct_index]) {
+                    radios[data.correct_index].checked = true;
+                }
+                const addOptionButton = node.querySelector('[data-add-option]');
+                if (addOptionButton) {
+                    addOptionButton.addEventListener('click', () => {
+                        this.addOption(node, '');
+                    });
+                }
+                this.questionsContainer.appendChild(node);
+                this.updateQuestionIndices();
+            }
+
+            addOption(questionNode, value) {
+                const fragment = this.templates.option.content.cloneNode(true);
+                const optionNode = fragment.querySelector('[data-option]');
+                if (!optionNode) {
+                    return;
+                }
+                const input = optionNode.querySelector('[data-option-input]');
+                if (input) {
+                    input.value = value || '';
+                }
+                const removeButton = optionNode.querySelector('[data-remove-option]');
+                if (removeButton) {
+                    removeButton.addEventListener('click', () => {
+                        optionNode.remove();
+                        this.updateQuestionIndices();
+                    });
+                }
+                const optionsContainer = questionNode.querySelector('[data-options]');
+                if (!optionsContainer) {
+                    return;
+                }
+                optionsContainer.appendChild(optionNode);
+                this.updateQuestionIndices();
+            }
+
+            updateQuestionIndices() {
+                const questionNodes = Array.from(this.questionsContainer.querySelectorAll('[data-question]'));
+                questionNodes.forEach((node, index) => {
+                    const indexTarget = node.querySelector('[data-question-index]');
+                    if (indexTarget) {
+                        indexTarget.textContent = String(index + 1);
+                    }
+                    this.refreshOptions(node, index);
+                });
+                this.updateQuestionRemovalState(questionNodes.length);
+            }
+
+            refreshOptions(questionNode, questionIndex) {
+                const optionNodes = Array.from(questionNode.querySelectorAll('[data-option]'));
+                optionNodes.forEach((optionNode, optionIndex) => {
+                    const radio = optionNode.querySelector('[data-option-correct]');
+                    if (radio) {
+                        radio.name = `question-${questionIndex}-correct`;
+                        radio.value = String(optionIndex);
+                    }
+                });
+                const removeButtons = questionNode.querySelectorAll('[data-remove-option]');
+                removeButtons.forEach((button) => {
+                    button.disabled = optionNodes.length <= 2;
+                    button.classList.toggle('is-disabled', optionNodes.length <= 2);
+                });
+            }
+
+            updateQuestionRemovalState(count) {
+                const buttons = this.questionsContainer.querySelectorAll('[data-remove-question]');
+                buttons.forEach((button) => {
+                    button.disabled = count <= 1;
+                    button.classList.toggle('is-disabled', count <= 1);
+                });
+            }
+
+            clearError() {
+                if (this.errorField) {
+                    this.errorField.textContent = '';
+                    this.errorField.hidden = true;
+                }
+            }
+
+            showError(message) {
+                if (!message) {
+                    return;
+                }
+                if (this.errorField) {
+                    this.errorField.textContent = message;
+                    this.errorField.hidden = false;
+                } else {
+                    window.alert(message);
+                }
+            }
+
+            serialize() {
+                this.clearError();
+                const questionNodes = Array.from(this.questionsContainer.querySelectorAll('[data-question]'));
+                if (!questionNodes.length) {
+                    this.showError(this.form.dataset.errorQuestions || '');
+                    return false;
+                }
+                const questions = [];
+                for (const node of questionNodes) {
+                    const promptField = node.querySelector('[data-question-prompt]');
+                    const prompt = promptField ? promptField.value.trim() : '';
+                    if (!prompt) {
+                        this.showError(this.form.dataset.errorEmptyPrompt || '');
+                        if (promptField) {
+                            promptField.focus();
+                        }
+                        return false;
+                    }
+                    const optionNodes = Array.from(node.querySelectorAll('[data-option]'));
+                    if (optionNodes.length < 2) {
+                        this.showError(this.form.dataset.errorOptions || '');
+                        return false;
+                    }
+                    const options = [];
+                    let correctIndex = -1;
+                    for (let index = 0; index < optionNodes.length; index += 1) {
+                        const optionNode = optionNodes[index];
+                        const input = optionNode.querySelector('[data-option-input]');
+                        const value = input ? input.value.trim() : '';
+                        if (!value) {
+                            this.showError(this.form.dataset.errorOptions || '');
+                            if (input) {
+                                input.focus();
+                            }
+                            return false;
+                        }
+                        const radio = optionNode.querySelector('[data-option-correct]');
+                        if (radio && radio.checked) {
+                            correctIndex = index;
+                        }
+                        options.push(value);
+                    }
+                    if (correctIndex < 0) {
+                        this.showError(this.form.dataset.errorCorrect || '');
+                        return false;
+                    }
+                    questions.push({
+                        prompt,
+                        options,
+                        correct_index: correctIndex,
+                    });
+                }
+                this.payloadField.value = JSON.stringify(questions);
+                return true;
+            }
+        }
+
+        document.querySelectorAll('form[data-question-builder]').forEach((form) => {
+            new QuestionBuilder(form);
+        });
+    }
+})();
+</script>
 {% endblock %}
 
 {% block extra_scripts %}
